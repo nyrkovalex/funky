@@ -1,5 +1,5 @@
 # funky
-Funky provides simple functional idioms for golamg builtin types by thing and simple wrappers.
+Funky provides simple functional idioms for golang builtin types by thing and simple wrappers.
 
 # Usage
 Every method returns a new object without modifying the source.
