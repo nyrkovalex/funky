@@ -70,3 +70,13 @@ func (t FunkyTest) TestShouldReduceToSum(e *Expect) {
 	})
 	e.Expect(result).ToBe(6)
 }
+
+func (t FunkyTest) TestShouldChainCalls(e *Expect) {
+	result := t.slice.Filter(func(item interface{}) bool {
+		return item.(int) == 2
+	}).Map(func(item interface{}) interface{} {
+		return fmt.Sprintf("%d", item.(int))
+	})
+	e.Expect(len(result)).ToBe(1)
+	e.Expect(result[0]).ToBe("2")
+}
