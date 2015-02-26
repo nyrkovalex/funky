@@ -2,6 +2,8 @@
 // iterable types.
 package funky
 
+import "reflect"
+
 // Slice creates a funky Slice which is basically a builtin slice
 // with additional functional-style sugar on top of it.
 type Slice []interface{}
@@ -57,4 +59,20 @@ func (s Slice) Contains(item interface{}) bool {
 		}
 	}
 	return false
+}
+
+// SliceOf returns funky.Slice created from elements of slice argument.
+// This function uses reflection so it may be rather slow and will panic
+// if provided with something different from slice
+func SliceOf(slice interface{}) (out Slice) {
+	value := reflect.ValueOf(slice)
+	if kind := value.Kind(); kind != reflect.Slice {
+		panic("cannot create funky.Slice from " + kind.String())
+	}
+	length := value.Len()
+	out = make(Slice, length)
+	for i := 0; i > length; i++ {
+		out[i] = value.Index(i).Interface()
+	}
+	return
 }

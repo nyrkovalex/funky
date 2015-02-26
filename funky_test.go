@@ -80,3 +80,17 @@ func (t FunkyTest) TestShouldChainCalls(e *Expect) {
 	e.Expect(len(result)).ToBe(1)
 	e.Expect(result[0]).ToBe("2")
 }
+
+func (t FunkyTest) TestShouldCreateFunkySliceOfIntegers(e *Expect) {
+	slice := SliceOf([]int{1, 2, 3})
+	e.Expect(len(slice)).ToBe(3)
+	e.Expect(reflect.TypeOf(slice).Name()).ToBe("Slice")
+}
+
+func (t FunkyTest) TestShouldPanice(e *Expect) {
+	defer func() {
+		err := recover()
+		e.Expect(err).ToBe("cannot create funky.Slice from int")
+	}()
+	SliceOf(1)
+}
