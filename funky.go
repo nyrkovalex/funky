@@ -81,6 +81,7 @@ func (s Slice) AsStrings() (out []string) {
 	return
 }
 
+// WriteTo writes current funky.Slice contents to the slice provided
 func (s Slice) WriteTo(out interface{}) {
 	value := reflect.ValueOf(out)
 	for i, v := range s {
