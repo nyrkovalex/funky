@@ -64,6 +64,15 @@ func (s Slice) Contains(item interface{}) bool {
 	return false
 }
 
+// AsStrings returns contens of current Slice printed to
+// string as default value.
+func (s Slice) AsStrings() (out []string) {
+	for _, v := range s {
+		out = append(out, fmt.Sprintf("%v", v))
+	}
+	return
+}
+
 // SliceOf returns funky.Slice created from elements of slice argument.
 // This function uses reflection so it may be rather slow and will panic
 // if provided with something different from slice.

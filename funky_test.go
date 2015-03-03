@@ -81,6 +81,13 @@ func (t SliceTest) TestShouldChainCalls(e *Expect) {
 	e.Expect(result[0]).ToBe("2")
 }
 
+func (t SliceTest) TestShouldCreateStringSlice(e *Expect) {
+	var stringSlice []string
+	stringSlice = t.slice.AsStrings()
+	e.Expect(len(stringSlice)).ToBe(3)
+	e.Expect(stringSlice[0]).ToBe("1")
+}
+
 func (t SliceTest) TestShouldCreateFunkySliceOfIntegers(e *Expect) {
 	slice := SliceOf([]int{1, 2, 3})
 	e.Expect(len(slice)).ToBe(3)
