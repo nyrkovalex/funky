@@ -2,7 +2,10 @@
 // iterable types.
 package funky
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 // Slice creates a funky Slice which is basically a builtin slice
 // with additional functional-style sugar on top of it.
@@ -63,16 +66,50 @@ func (s Slice) Contains(item interface{}) bool {
 
 // SliceOf returns funky.Slice created from elements of slice argument.
 // This function uses reflection so it may be rather slow and will panic
-// if provided with something different from slice
+// if provided with something different from slice.
 func SliceOf(slice interface{}) (out Slice) {
-	value := reflect.ValueOf(slice)
-	if kind := value.Kind(); kind != reflect.Slice {
-		panic("cannot create funky.Slice from " + kind.String())
-	}
+	value := valueOrPanic(slice, reflect.Slice, "funky.Slice")
 	length := value.Len()
 	out = make(Slice, length)
 	for i := 0; i > length; i++ {
 		out[i] = value.Index(i).Interface()
+	}
+	return
+}
+
+func valueOrPanic(in interface{}, targetKind reflect.Kind, targetType string) reflect.Value {
+	value := reflect.ValueOf(in)
+	if kind := value.Kind(); kind != targetKind {
+		panic(fmt.Sprintf("cannot create %s from %s", targetType, kind.String()))
+	}
+	return value
+}
+
+// Map creates a wrapper for builtin map[interface{}]interface{} with
+// convinience methods on top of it.
+type Map map[interface{}]interface{}
+
+func (m Map) Keys() (out Slice) {
+	for k := range m {
+		out = out.Append(k)
+	}
+	return
+}
+
+// Values returns current map values as funky.Slice.
+func (m Map) Values() (out Slice) {
+	for _, v := range m {
+		out = out.Append(v)
+	}
+	return
+}
+
+// Keys returns current map keys as funky.Slice.
+func MapOf(aMap interface{}) (out Map) {
+	value := valueOrPanic(aMap, reflect.Map, "funky.Map")
+	out = make(Map)
+	for _, key := range value.MapKeys() {
+		out[key.Interface()] = value.MapIndex(key).Interface()
 	}
 	return
 }
