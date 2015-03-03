@@ -35,8 +35,9 @@ func (s Slice) Map(fn func(interface{}) interface{}) (result Slice) {
 // Reduce reduces Slice s with the fn function provided to a singe value.
 // Value returned by previous fn call is passed as its first argument on the next run.
 func (s Slice) Reduce(fn func(interface{}, interface{}) interface{}) (collected interface{}) {
+	collected = s[0]
 	for i := 1; i < len(s); i++ {
-		collected = fn(s[i-1], s[i])
+		collected = fn(collected, s[i])
 	}
 	return
 }
@@ -49,8 +50,15 @@ func (s Slice) Append(items ...interface{}) Slice {
 
 // Delete returns new Slice containing elements from Slice s with
 // element at raget index removed.
-func (s Slice) Delete(index int) Slice {
-	return Slice(append(s[:index], s[index+1:]...))
+func (s Slice) Delete(index int) (out Slice) {
+	out = make(Slice, 0, len(s)-1)
+	for i, v := range s {
+		if i == index {
+			continue
+		}
+		out = append(out, v)
+	}
+	return
 }
 
 // Contains returns true if Slice s contains target item
@@ -71,6 +79,13 @@ func (s Slice) AsStrings() (out []string) {
 		out = append(out, fmt.Sprintf("%v", v))
 	}
 	return
+}
+
+func (s Slice) WriteTo(out interface{}) {
+	value := reflect.ValueOf(out)
+	for i, v := range s {
+		value.Index(i).Set(reflect.ValueOf(v))
+	}
 }
 
 // SliceOf returns funky.Slice created from elements of slice argument.

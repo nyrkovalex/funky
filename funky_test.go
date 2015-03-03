@@ -94,6 +94,14 @@ func (t SliceTest) TestShouldCreateFunkySliceOfIntegers(e *Expect) {
 	e.Expect(reflect.TypeOf(slice).Name()).ToBe("Slice")
 }
 
+func (t SliceTest) TestShouldWriteFunkySliceToInt(e *Expect) {
+	target := make([]int, len(t.slice))
+	t.slice.WriteTo(target)
+	e.Expect(target[0]).ToBe(1)
+	e.Expect(target[1]).ToBe(2)
+	e.Expect(target[2]).ToBe(3)
+}
+
 func (t SliceTest) TestShouldPanic(e *Expect) {
 	e.Expect(func() {
 		SliceOf(1)
