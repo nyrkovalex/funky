@@ -7,6 +7,10 @@ import (
 	"reflect"
 )
 
+type predicate func(interface{}) bool
+type mapper func(interface{}) interface{}
+type reducer func(interface{}, interface{}) interface{}
+
 // Slice creates a funky Slice which is basically a builtin slice
 // with additional functional-style sugar on top of it.
 type Slice []interface{}
@@ -14,7 +18,7 @@ type Slice []interface{}
 // Filter filters the slice sequentually applying predicate
 // function provided to each slice element.
 // Returns slice containing elements for which fn predicate returned true.
-func (s Slice) Filter(fn func(interface{}) bool) (result Slice) {
+func (s Slice) Filter(fn predicate) (result Slice) {
 	for _, item := range s {
 		if fn(item) {
 			result = append(result, item)
@@ -25,7 +29,7 @@ func (s Slice) Filter(fn func(interface{}) bool) (result Slice) {
 
 // Map applies function provided to each element of slice and returns new
 // Slice containing elements returned by mapping function fn.
-func (s Slice) Map(fn func(interface{}) interface{}) (result Slice) {
+func (s Slice) Map(fn mapper) (result Slice) {
 	for _, item := range s {
 		result = append(result, fn(item))
 	}
@@ -34,7 +38,7 @@ func (s Slice) Map(fn func(interface{}) interface{}) (result Slice) {
 
 // Reduce reduces Slice s with the fn function provided to a singe value.
 // Value returned by previous fn call is passed as its first argument on the next run.
-func (s Slice) Reduce(fn func(interface{}, interface{}) interface{}) (collected interface{}) {
+func (s Slice) Reduce(fn reducer) (collected interface{}) {
 	collected = s[0]
 	for i := 1; i < len(s); i++ {
 		collected = fn(collected, s[i])
@@ -114,6 +118,7 @@ func valueOrPanic(in interface{}, targetKind reflect.Kind, targetType string) re
 // convinience methods on top of it.
 type Map map[interface{}]interface{}
 
+// Keys returns current map keys as funky.Slice.
 func (m Map) Keys() (out Slice) {
 	for k := range m {
 		out = out.Append(k)
@@ -129,12 +134,72 @@ func (m Map) Values() (out Slice) {
 	return
 }
 
-// Keys returns current map keys as funky.Slice.
+// MapOf creates a new funky.Map from a builtin boring map
 func MapOf(aMap interface{}) (out Map) {
 	value := valueOrPanic(aMap, reflect.Map, "funky.Map")
 	out = make(Map)
 	for _, key := range value.MapKeys() {
 		out[key.Interface()] = value.MapIndex(key).Interface()
+	}
+	return
+}
+
+type Chan chan interface{}
+
+// NewChan creates new funky.Chan ready to go
+func NewChan() Chan {
+	return make(Chan)
+}
+
+// ChanOf creates new funky.Chan from a slice provided
+func ChanOf(s Slice) Chan {
+	c := NewChan()
+	go func() {
+		for _, v := range s {
+			c <- v
+		}
+		close(c)
+	}()
+	return c
+}
+
+// Filter returns new funky.Chan and concurently passes all values from
+// the current one that satisfy predicate provided to it
+func (c Chan) Filter(p predicate) Chan {
+	newChan := NewChan()
+	go func() {
+		for v := range c {
+			if p(v) {
+				newChan <- v
+			}
+		}
+		close(newChan)
+	}()
+	return newChan
+}
+
+// Map returns new funky.Chan and concurently passes values from the current one
+// transformed by a mapper provided to it
+func (c Chan) Map(t mapper) Chan {
+	newChan := NewChan()
+	go func() {
+		for v := range c {
+			newChan <- t(v)
+		}
+		close(newChan)
+	}()
+	return newChan
+}
+
+// Reduce reduces all values from current channel to a single value by
+// applying reducer provided to each element
+func (c Chan) Reduce(r reducer) (collected interface{}) {
+	for v := range c {
+		if collected == nil {
+			collected = v
+			continue
+		}
+		collected = r(collected, v)
 	}
 	return
 }

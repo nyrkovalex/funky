@@ -146,3 +146,59 @@ func (t MapTest) TestShouldPanicCreatingMapFromCrap(e *Expect) {
 		MapOf(1)
 	}).ToPanic("cannot create funky.Map from int")
 }
+
+type ChanTest struct {
+}
+
+func DummyChan() Chan {
+	return ChanOf(Slice{1, 2, 3})
+}
+
+func TestChan(t *testing.T) {
+	Run(t, ChanTest{})
+}
+
+func (t ChanTest) TestShouldCreateNewChan(e *Expect) {
+	c := DummyChan()
+	e.Expect(<-c).ToBe(1)
+	e.Expect(<-c).ToBe(2)
+	e.Expect(<-c).ToBe(3)
+}
+
+func (t ChanTest) TestShouldFilterChannel(e *Expect) {
+	c := DummyChan()
+	filtered := c.Filter(func(item interface{}) bool {
+		return item.(int) == 2
+	})
+	e.Expect(<-filtered).ToBe(2)
+}
+
+func (t ChanTest) TestShouldTransformIntsToString(e *Expect) {
+	c := DummyChan()
+	mapped := c.Map(func(item interface{}) interface{} {
+		return fmt.Sprintf("mapped %d", item.(int))
+	})
+	e.Expect(<-mapped).ToBe("mapped 1")
+	e.Expect(<-mapped).ToBe("mapped 2")
+	e.Expect(<-mapped).ToBe("mapped 3")
+}
+
+func (t ChanTest) TestShouldReduceChannelToSum(e *Expect) {
+	c := DummyChan()
+	sum := c.Reduce(func(left interface{}, right interface{}) interface{} {
+		return left.(int) + right.(int)
+	})
+	e.Expect(sum).ToBe(6)
+}
+
+func (t ChanTest) TestShouldChainCalls(e *Expect) {
+	c := DummyChan()
+	result := c.Filter(func(item interface{}) bool {
+		return item.(int) != 2
+	}).Map(func(item interface{}) interface{} {
+		return fmt.Sprintf("%d", item.(int))
+	}).Reduce(func(left interface{}, right interface{}) interface{} {
+		return left.(string) + right.(string)
+	})
+	e.Expect(result).ToBe("13")
+}
