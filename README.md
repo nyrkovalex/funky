@@ -23,7 +23,7 @@ func main() {
     }).Reduce(func(left interface{}, right interface{}) interface{} {
         return left.(string) + right.(string)
     })
-    fmt.Println(c) // Outputs "13"
+    fmt.Println(result) // Outputs "13"
 }
 ```
 
